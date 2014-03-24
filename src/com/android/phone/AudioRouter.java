@@ -53,12 +53,23 @@ import java.util.List;
     private int mPreviousMode = AudioMode.EARPIECE;
     private int mSupportedModes = AudioMode.ALL_MODES;
 
+    // flags indicating if the audio stream volume must be reset
+    // set these flags to true to fix the low in-call volume on STE devices
+    private boolean resetVolumeAfterMuteChange = false;
+    private boolean resetVolumeAfterAudioModeChange = false;
+
     public AudioRouter(Context context, BluetoothManager bluetoothManager,
             WiredHeadsetManager wiredHeadsetManager, CallManager callManager) {
         mContext = context;
         mBluetoothManager = bluetoothManager;
         mWiredHeadsetManager = wiredHeadsetManager;
         mCallManager = callManager;
+
+        // init reset volume flags
+        resetVolumeAfterMuteChange = mContext.getResources().getBoolean(
+                R.bool.reset_volume_after_mute_change);
+        resetVolumeAfterAudioModeChange = mContext.getResources().getBoolean(
+                R.bool.reset_volume_after_audio_mode_change);
 
         init();
     }
@@ -182,9 +193,10 @@ import java.util.List;
         
         notifyListeners();
         
-        // Fix for low in-call volume bug
         // Reset the audio volume stream after mute change
-        PhoneUtils.resetAudioStreamVolume();
+        if (resetVolumeAfterMuteChange) {
+            PhoneUtils.resetAudioStreamVolume();
+        }
     }
 
     /**
@@ -356,9 +368,10 @@ import java.util.List;
             notifyListeners();
         }
         
-        // Fix for low in-call volume bug
-        // Reset the audio volume stream after switching audio mode
-        PhoneUtils.resetAudioStreamVolume();
+        // Reset the audio volume stream after audio mode change
+        if (resetVolumeAfterAudioModeChange) {
+            PhoneUtils.resetAudioStreamVolume();
+        }
     }
 
     /**
